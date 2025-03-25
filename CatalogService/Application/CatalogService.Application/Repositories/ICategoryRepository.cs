@@ -4,7 +4,7 @@ namespace CatalogService.Application.Repositories
 {
     public interface ICategoryRepository
     {
-        Task<Category?> GetByIdAsync(Guid productId, CancellationToken cancellationToken = default);
+        Task<Category?> GetByIdAsync(int categoryId, CancellationToken cancellationToken = default);
         Task AddAsync(Category product, CancellationToken cancellationToken = default);
         Task UpdateAsync(Category product, CancellationToken cancellationToken = default);
         Task DeleteAsync(Category product, CancellationToken cancellationToken = default);
