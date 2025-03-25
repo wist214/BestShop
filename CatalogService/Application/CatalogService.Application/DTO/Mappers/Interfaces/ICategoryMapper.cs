@@ -1,6 +1,6 @@
 ﻿using CatalogService.Domain.Entities;
 
-namespace CatalogService.Application.DTO.Mappers
+namespace CatalogService.Application.DTO.Mappers.Interfaces
 {
     public interface ICategoryMapper
     {

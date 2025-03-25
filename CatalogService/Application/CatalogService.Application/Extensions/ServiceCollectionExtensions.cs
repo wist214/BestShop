@@ -1,4 +1,5 @@
 ﻿using CatalogService.Application.DTO.Mappers;
+using CatalogService.Application.DTO.Mappers.Interfaces;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 

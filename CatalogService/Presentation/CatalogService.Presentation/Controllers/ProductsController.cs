@@ -1,5 +1,5 @@
 ﻿using CatalogService.Application.DTO;
-using CatalogService.Application.DTO.Mappers;
+using CatalogService.Application.DTO.Mappers.Interfaces;
 using CatalogService.Application.Repositories;
 using Microsoft.AspNetCore.Mvc;
 

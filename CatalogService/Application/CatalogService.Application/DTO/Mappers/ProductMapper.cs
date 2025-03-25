@@ -1,4 +1,5 @@
-﻿using CatalogService.Domain.Entities;
+﻿using CatalogService.Application.DTO.Mappers.Interfaces;
+using CatalogService.Domain.Entities;
 using Riok.Mapperly.Abstractions;
 
 namespace CatalogService.Application.DTO.Mappers

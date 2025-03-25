@@ -1,7 +1,7 @@
 ﻿using CatalogService.Domain.Entities;
 using Riok.Mapperly.Abstractions;
 
-namespace CatalogService.Application.DTO.Mappers
+namespace CatalogService.Application.DTO.Mappers.Interfaces
 {
     public interface IProductMapper
     {
