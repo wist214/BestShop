@@ -14,6 +14,13 @@ namespace OrderService.Infrastructure.Repositories
                 .FirstOrDefaultAsync(o => o.Id == orderId, cancellationToken);
         }
 
+        public async Task<Order?> GetByUserIdAsync(int userId, CancellationToken cancellationToken = default)
+        {
+            return await context.Orders
+                .Include(o => o.Items)
+                .FirstOrDefaultAsync(o => o.UserId == userId, cancellationToken);
+        }
+
         public async Task AddAsync(Order order, CancellationToken cancellationToken = default)
         {
             await context.Orders.AddAsync(order, cancellationToken);

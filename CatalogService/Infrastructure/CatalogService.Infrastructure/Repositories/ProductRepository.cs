@@ -9,14 +9,20 @@ namespace CatalogService.Infrastructure.Repositories
     {
         private readonly IMongoCollection<Product> _products = context.Products;
         private readonly IMongoCollection<Category> _categories = context.Categories;
+        private readonly IMongoCollection<Counter> _counters = context.Database.GetCollection<Counter>("Counters");
 
         public async Task<Product?> GetByIdAsync(int productId, CancellationToken cancellationToken = default)
         {
-            var filter = Builders<Product>.Filter.Eq(x => x.Id, productId);
+            var filter = Builders<Product>.Filter.And(
+                Builders<Product>.Filter.Eq(x => x.Id, productId),
+                Builders<Product>.Filter.Eq(x => x.IsDeleted, false)
+            );
             var product = await _products.Find(filter).FirstOrDefaultAsync(cancellationToken);
 
             if (product == null)
+            {
                 return null;
+            }
 
             var categoryFilter = Builders<Category>.Filter.Eq(c => c.Id, product.CategoryId);
             var category = await _categories.Find(categoryFilter).FirstOrDefaultAsync(cancellationToken);
@@ -29,6 +35,7 @@ namespace CatalogService.Infrastructure.Repositories
         public async Task AddAsync(Product product, CancellationToken cancellationToken = default)
         {
             var insertOneOptions = new InsertOneOptions();
+            product.Id = await GetNextSequenceValue("products");
             await _products.InsertOneAsync(product, insertOneOptions, cancellationToken);
         }
 
@@ -64,6 +71,24 @@ namespace CatalogService.Infrastructure.Repositories
             }
 
             return products;
+        }
+
+        public async Task<int> GetNextSequenceValue(string sequenceName)
+        {
+            // Build the filter to find the counter document with the specified sequence name.
+            var filter = Builders<Counter>.Filter.Eq(c => c.Id, sequenceName);
+            // Build the update to increment the sequence value by 1.
+            var update = Builders<Counter>.Update.Inc(c => c.SequenceValue, 1);
+            // Options: upsert (create if not exists) and return the updated document.
+            var options = new FindOneAndUpdateOptions<Counter>
+            {
+                ReturnDocument = ReturnDocument.After,
+                IsUpsert = true
+            };
+
+            // Atomically update the counter and retrieve the new sequence value.
+            var counter = await _counters.FindOneAndUpdateAsync(filter, update, options);
+            return counter.SequenceValue;
         }
     }
 }

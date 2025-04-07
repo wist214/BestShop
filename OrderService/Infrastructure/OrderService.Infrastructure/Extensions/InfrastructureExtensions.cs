@@ -1,6 +1,8 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using OrderService.Application.DTOs.Mappers;
+using OrderService.Application.DTOs.Mappers.Interfaces;
 using OrderService.Application.Repositories;
 using OrderService.Infrastructure.Data;
 using OrderService.Infrastructure.Repositories;
@@ -17,6 +19,7 @@ namespace OrderService.Infrastructure.Extensions
             });
 
             services.AddScoped<IOrderRepository, OrderRepository>();
+            services.AddScoped<IOrderMapper, OrderMapper>();
 
             return services;
         }

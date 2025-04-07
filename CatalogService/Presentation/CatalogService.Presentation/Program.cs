@@ -1,5 +1,6 @@
 using CatalogService.Application.Extensions;
 using CatalogService.Infrastructure.Extensions;
+using CatalogService.Presentation.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -12,18 +13,13 @@ builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 builder.Services.AddControllers();
 
+builder.Services.AddGrpc();
 var app = builder.Build();
 
 
-// Configure the HTTP request pipeline.
-if (app.Environment.IsDevelopment())
-{
-    app.UseSwagger();
-    app.UseSwaggerUI();
-}
+app.MapGrpcService<CatalogGrpcService>();
+app.MapGet("/", () => "Communication with gRPC endpoints must be made through a gRPC client.");
 
-app.MapControllers();
-//app.UseHttpsRedirection();
 
 app.Run();
 

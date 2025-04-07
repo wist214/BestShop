@@ -16,5 +16,7 @@ namespace CatalogService.Infrastructure.Data
 
         public IMongoCollection<Product> Products => _database.GetCollection<Product>("Products");
         public IMongoCollection<Category> Categories => _database.GetCollection<Category>("Categories");
+
+        public IMongoDatabase Database => _database;
     }
 }

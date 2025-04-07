@@ -1,0 +1,60 @@
+syntax = "proto3";
+
+option csharp_namespace = "CatalogService.GrpcContracts";
+
+package catalog;
+
+message GetProductRequest {
+  int32 productId = 1;
+}
+
+message GetProductResponse {
+  int32 productId = 1;
+  string name = 2;	
+  string description = 3;
+  int32 price = 4;
+  int32 stock = 5;
+}
+
+message CreateCategoryRequest {
+  string name = 1;
+  string description = 2;
+}
+
+message CreateCategoryResponse {
+  int32 categoryId = 1;
+  bool success = 2;
+  string message = 3;
+}
+
+message CreateProductRequest {
+  string name = 1;
+  string description = 2;
+  int32 price = 3;
+  int32 stock = 4;
+  int32 categoryId = 5;
+}
+
+message CreateProductResponse {
+  int32 productId = 1;
+  bool success = 2;
+  string message = 3;
+}
+
+message DeleteProductRequest {
+  int32 productId = 1;
+  int32 categoryId = 2;
+}
+
+message DeleteProductResponse {
+  bool success = 2;
+  string message = 3;
+}
+
+
+service Catalog {
+  rpc GetProduct(GetProductRequest) returns (GetProductResponse);
+  rpc CreateProduct(CreateProductRequest) returns (CreateProductResponse);
+  rpc DeleteProduct(DeleteProductRequest) returns (DeleteProductResponse);
+  rpc CreateCategory(CreateCategoryRequest) returns (CreateCategoryResponse);
+}

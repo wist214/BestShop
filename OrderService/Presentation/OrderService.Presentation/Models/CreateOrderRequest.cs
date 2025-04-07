@@ -6,8 +6,6 @@ namespace OrderService.Presentation.Models
     {
         [Required]
         public int UserId { get; set; }
-
-        [MinLength(1)]
         public List<OrderItemRequest> Items { get; set; } = new();
     }
 
@@ -15,10 +13,7 @@ namespace OrderService.Presentation.Models
     {
         [Required]
         public int ProductId { get; set; }
-        
-        [MinLength(1)]
         public int Quantity { get; set; }
-
-        public decimal Price { get; set; }
+        public int Price { get; set; }
     }
 }

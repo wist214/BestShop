@@ -1,0 +1,53 @@
+﻿@page "/orders"
+@inject Services.IOrderServiceClient OrderServiceClient
+
+<h3>Orders</h3>
+
+@if (orders == null)
+{
+    <p><em>Loading orders...</em></p>
+}
+else if (!orders.Any())
+{
+    <p>No orders found.</p>
+}
+else
+{
+    <table class="table">
+        <thead>
+        <tr>
+            <th>Order ID</th>
+            <th>User ID</th>
+            <th>Status</th>
+            <th>Created At</th>
+            <th>Items Count</th>
+        </tr>
+        </thead>
+        <tbody>
+        @foreach (var order in orders)
+        {
+            <tr>
+                <td>@order.Id</td>
+                <td>@order.UserId</td>
+                <td>@order.Status</td>
+                <td>@order.CreatedAt.ToDateTime().ToString("g")</td>
+                <td>@order.Items.Count</td>
+            </tr>
+        }
+        </tbody>
+    </table>
+}
+
+@code {
+    // List to hold orders retrieved from the gRPC OrderService
+    private List<OrderService.GrpcContracts.Order> orders = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        // Assuming you have implemented GetAllOrdersAsync in your IOrderServiceClient.
+        // This method should retrieve all orders from OrderService.
+        var order = await OrderServiceClient.GetOrderAsync(0);
+
+        orders.Add(order);
+    }
+}

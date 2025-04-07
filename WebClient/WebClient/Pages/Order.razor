@@ -1,0 +1,115 @@
+﻿@page "/order"
+@using OrderService.GrpcContracts
+@using WebClient.Models
+@using AddOrderItemRequest = WebClient.Models.AddOrderItemRequest
+@using CreateOrderRequest = WebClient.Models.CreateOrderRequest
+@using OrderItem = WebClient.Models.OrderItem
+@inject WebClient.Services.IOrderServiceClient OrderServiceClient
+
+<h3>Create or Update Order</h3>
+
+<EditForm Model="orderRequest" OnValidSubmit="HandleValidSubmit">
+    <DataAnnotationsValidator />
+    <ValidationSummary />
+
+    <div class="mb-3">
+        <label class="form-label">User Id:</label>
+        <InputNumber @bind-Value="orderRequest.UserId" class="form-control" />
+    </div>
+
+    <div class="mb-3">
+        <label class="form-label">Product Id:</label>
+        <InputNumber @bind-Value="newItem.ProductId" class="form-control" />
+    </div>
+
+    <div class="mb-3">
+        <label class="form-label">Quantity:</label>
+        <InputNumber @bind-Value="newItem.Quantity" class="form-control" />
+    </div>
+
+    <div class="mb-3">
+        <label class="form-label">Price:</label>
+        <InputNumber @bind-Value="newItem.Price" class="form-control" />
+    </div>
+
+    <button type="submit" class="btn btn-primary">Add Item to Order</button>
+</EditForm>
+
+@if (orderId != null)
+{
+    <p>Current Order ID: @orderId</p>
+}
+
+@if (!string.IsNullOrEmpty(resultMessage))
+{
+    <div class="alert alert-info mt-3">@resultMessage</div>
+}
+
+@code {
+    // Request model for creating order (defined in Models/CreateOrderRequest.cs)
+    private CreateOrderRequest orderRequest = new CreateOrderRequest
+        {
+            UserId = 1, // Пример, можно изменить
+            Items = new List<OrderItemRequest>()
+        };
+
+    // Новый товар, который пользователь хочет добавить
+    private OrderItemRequest newItem = new OrderItemRequest();
+
+    // Сохраненный идентификатор текущего заказа (если заказ уже создан)
+    private int? orderId;
+
+    private string? resultMessage;
+
+    private async Task HandleValidSubmit()
+    {
+        try
+        {
+            if (orderId == null)
+            {
+                // Order does not exist yet – create a new order with the initial item.
+                orderRequest.Items.Add(newItem);
+                var createResponse = await OrderServiceClient.CreateOrderAsync(new CreateOrderRequest
+                    {
+                        UserId = orderRequest.UserId,
+                        Items = orderRequest.Items
+                    });
+
+                if (createResponse.Success)
+                {
+                    orderId = createResponse.OrderId;
+                    resultMessage = $"Order created successfully with ID: {orderId}";
+                }
+                else
+                {
+                    resultMessage = $"Failed to create order: {createResponse.Message}";
+                }
+            }
+            else
+            {
+                // Order exists – add new item to the existing order.
+                // Assuming you have an AddOrderItem RPC defined in your proto.
+                var addResponse = await OrderServiceClient.AddOrderItemAsync(new AddOrderItemRequest
+                    {
+                        OrderId = orderId.Value,
+                        OrderItem = new OrderItem
+                        {
+                            ProductId = newItem.ProductId,
+                            Quantity = newItem.Quantity,
+                            Price = newItem.Price
+                        }
+                    });
+                resultMessage = addResponse.Success
+                    ? "Item added successfully to the order."
+                    : $"Failed to add item: {addResponse.Message}";
+            }
+
+            // Clear newItem for next input.
+            newItem = new OrderItemRequest();
+        }
+        catch (Exception ex)
+        {
+            resultMessage = $"Error: {ex.Message}";
+        }
+    }
+}

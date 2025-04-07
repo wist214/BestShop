@@ -1,0 +1,25 @@
+syntax = "proto3";
+
+option csharp_namespace = "CatalogService.GrpcContracts";
+
+package catalog;
+
+// Запрос для получения информации о продукте по Id
+message GetProductRequest {
+  int32 productId = 1;
+}
+
+// Ответ с данными продукта
+message GetProductResponse {
+  int32 productId = 1;
+  string name = 2;
+  string description = 3;
+  int32 price = 4;
+  int32 stock = 5;
+}
+
+// gRPC сервис
+service Catalog {
+  // Синхронный вызов для получения данных о продукте
+  rpc GetProduct(GetProductRequest) returns (GetProductResponse);
+}

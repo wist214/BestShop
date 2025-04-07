@@ -1,0 +1,216 @@
+﻿@page "/fetchdata"
+
+<PageTitle>Products</PageTitle>
+
+@using CatalogService.GrpcContracts
+@using WebClient.Models
+@using WebClient.Services
+@inject NavigationManager NavigationManager
+@inject ICatalogServiceClient CatalogClient
+@inject IOrderServiceClient OrderServiceClient
+@inject OrderStateService OrderStateService
+
+<h1>Products</h1>
+
+<button class="btn btn-primary mb-3" @onclick="NavigateToCreateProduct">Add product</button>
+@if (SelectedProductIds.Count > 0)
+{
+    <button class="btn btn-danger mb-3 ms-2" @onclick="DeleteSelectedProducts">Delete</button>
+}
+
+@if (_products == null)
+{
+    <p><em>Loading...</em></p>
+}
+else
+{
+    <table class="table">
+        <thead>
+        <tr>
+            <th></th>
+            <th>Name</th>
+            <th>Description</th>
+            <th>Price</th>
+            <th>Stock</th>
+            <th>Actions</th>
+        </tr>
+        </thead>
+        <tbody>
+        @foreach (var product in _products)
+        {
+            <tr>
+                <td>
+                    <input type="checkbox" @onchange="(e) => ToggleSelection(e, product.ProductId)" />
+                </td>
+                <td>@product.Name</td>
+                <td>@product.Description</td>
+                <td>@product.Price</td>
+                <td>@product.Stock</td>
+                <td>
+                    <button class="btn btn-success btn-sm" @onclick="() => BuyProduct(product.ProductId)" disabled="@(product.Stock == 0)">Buy</button>
+                </td>
+            </tr>
+        }
+        </tbody>
+    </table>
+
+    @if (!string.IsNullOrEmpty(resultMessage))
+    {
+        <div class="alert alert-info mt-3">@resultMessage</div>
+    }
+}
+
+@code {
+
+
+    // Request model for creating order (defined in Models/CreateOrderRequest.cs)
+    private CreateOrderRequest orderRequest = new CreateOrderRequest
+    {
+        UserId = 2, // Пример, можно изменить
+        Items = new List<OrderItemRequest>()
+    };
+
+    // Новый товар, который пользователь хочет добавить
+    private OrderItemRequest newItem = new OrderItemRequest();
+
+    // Сохраненный идентификатор текущего заказа (если заказ уже создан)
+
+    private string? resultMessage;
+    private List<GetProductResponse> _products = null;
+    private HashSet<int> SelectedProductIds = new HashSet<int>();
+
+    protected override async Task OnInitializedAsync()
+    {
+        _products = new List<GetProductResponse>();
+        for (var i = 1; i <= 5; i++)
+        {
+            try
+            {
+                var prod = await CatalogClient.GetProductAsync(i);
+                _products.Add(prod);
+            }
+            catch (Grpc.Core.RpcException ex) when (ex.StatusCode == Grpc.Core.StatusCode.NotFound)
+            {
+            }
+        }
+    }
+
+    private void NavigateToCreateProduct()
+    {
+        NavigationManager.NavigateTo("/create-product");
+    }
+
+    private void ToggleSelection(ChangeEventArgs e, int productId)
+    {
+        var isChecked = (bool)e.Value;
+
+        if (isChecked)
+        {
+            SelectedProductIds.Add(productId);
+        }
+        else
+        {
+            SelectedProductIds.Remove(productId);
+        }
+
+        StateHasChanged();
+    }
+
+    private async Task DeleteSelectedProducts()
+    {
+        var productsToDelete = _products.Where(p => SelectedProductIds.Contains(p.ProductId)).ToList();
+
+        foreach (var product in productsToDelete)
+        {
+            try
+            {
+                var result = await CatalogClient.DeleteProductAsync(product.ProductId);
+
+                if (result.Success)
+                {
+                    _products.Remove(product);
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error {product.Name}: {ex.Message}");
+            }
+        }
+
+        SelectedProductIds.Clear();
+        StateHasChanged();
+    }
+
+    private async Task BuyProduct(int productId)
+    {
+        var product = _products.FirstOrDefault(p => p.ProductId == productId);
+        if (product != null && product.Stock > 0)
+        {
+            if (OrderStateService.CurrentOrderId == null)
+            {
+                // Order does not exist yet – create a new order with the initial item.
+                newItem = new OrderItemRequest
+                {
+                    ProductId = product.ProductId,
+                    Quantity = 1,
+                    Price = product.Price
+                };
+
+                orderRequest.Items.Add(newItem);
+                var createResponse = await OrderServiceClient.CreateOrderAsync(new CreateOrderRequest
+                {
+                    UserId = orderRequest.UserId,
+                    Items = orderRequest.Items
+                });
+
+                if (createResponse.Success)
+                {
+                    OrderStateService.CurrentOrderId = createResponse.OrderId;
+                    product.Stock--;
+                    resultMessage = $"Order created successfully with ID: {OrderStateService.CurrentOrderId}";
+                }
+                else
+                {
+                    resultMessage = $"Failed to create order: {createResponse.Message}";
+                }
+            }
+            else
+            {
+
+                newItem = new OrderItemRequest
+                {
+                    ProductId = product.ProductId,
+                    Quantity = 1,
+                    Price = product.Price
+                };
+
+                // Order exists – add new item to the existing order.
+                // Assuming you have an AddOrderItem RPC defined in your proto.
+                var addResponse = await OrderServiceClient.AddOrderItemAsync(new AddOrderItemRequest
+                {
+                        OrderId = OrderStateService.CurrentOrderId.Value,
+                    OrderItem = new OrderItem
+                    {
+                        ProductId = newItem.ProductId,
+                        Quantity = newItem.Quantity,
+                        Price = newItem.Price
+                    }
+                });
+
+                if (addResponse.Success)
+                {
+                    product.Stock--;
+                }
+
+                resultMessage = addResponse.Success
+                    ? "Item added successfully to the order."
+                    : $"Failed to add item: {addResponse.Message}";
+            }
+
+            // Clear newItem for next input.
+            newItem = new OrderItemRequest();
+            StateHasChanged();
+        }
+
+    }
+}
