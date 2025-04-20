@@ -34,8 +34,12 @@ message Order {
 }
 
 // Request message for retrieving an order.
-message GetOrderRequest {
+message GetOrdersRequest {
   int32 user_id = 1;
+}
+
+message GetOrdersResponse {
+  repeated Order orders = 1;
 }
 
 // Request message for creating a new order.
@@ -89,7 +93,7 @@ message AddOrderItemResponse {
 // Service definition for Order operations.
 service OrderService {
   // Retrieves an order by its ID.
-  rpc GetOrder(GetOrderRequest) returns (Order);
+  rpc GetOrders(GetOrdersRequest) returns (GetOrdersResponse);
 
   // Creates a new order.
   rpc CreateOrder(CreateOrderRequest) returns (CreateOrderResponse);

@@ -1,14 +1,16 @@
 ﻿using OrderService.GrpcContracts;
 using WebClient.Models;
+using OrderItem = OrderService.GrpcContracts.OrderItem;
 
 namespace WebClient.Services
 {
     public interface IOrderServiceClient
     {
-        Task<Order> GetOrderAsync(int userId);
+        Task<List<Order>> GetOrdersAsync(int userId);
         Task<CreateOrderResponse> CreateOrderAsync(Models.CreateOrderRequest request);
         Task<AddOrderItemResponse> AddOrderItemAsync(Models.AddOrderItemRequest request);
         Task<CancelOrderResponse> CancelOrderAsync(int orderId);
+        Task<UpdateOrderResponse> UpdateOrderAsync(Order order);
     }
 
     public class OrderServiceClient : IOrderServiceClient
@@ -20,9 +22,11 @@ namespace WebClient.Services
             _client = client;
         }
 
-        public async Task<Order> GetOrderAsync(int userId)
+        public async Task<List<Order>> GetOrdersAsync(int userId)
         {
-            return await _client.GetOrderAsync(new GetOrderRequest(){UserId = userId });
+            var result = await _client.GetOrdersAsync(new GetOrdersRequest(){UserId = userId });
+
+            return result.Orders.ToList();
         }
 
         public async Task<CreateOrderResponse> CreateOrderAsync(Models.CreateOrderRequest request)
@@ -62,6 +66,11 @@ namespace WebClient.Services
         public async Task<CancelOrderResponse> CancelOrderAsync(int orderId)
         {
             return await _client.CancelOrderAsync(new CancelOrderRequest(){OrderId = orderId});
+        }
+
+        public async Task<UpdateOrderResponse> UpdateOrderAsync(Order order)
+        {
+            return await _client.UpdateOrderAsync(new UpdateOrderRequest() { Order = order});
         }
     }
 }

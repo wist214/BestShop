@@ -15,32 +15,41 @@ namespace OrderService.Presentation.Services
         }
 
         // Retrieves an order by its ID.
-        public override async Task<Order> GetOrder(GetOrderRequest request, ServerCallContext context)
+        public override async Task<GetOrdersResponse> GetOrders(GetOrdersRequest request, ServerCallContext context)
         {
-            var dbOrder = await _orderRepository.GetByUserIdAsync(request.UserId);
-            if (dbOrder == null)
+            var dbOrders = await _orderRepository.GetByUserIdAsync(request.UserId);
+            if (!dbOrders.Any())
             {
                 throw new RpcException(new Status(StatusCode.NotFound, $"Order with UserID {request.UserId} not found."));
             }
 
-            var order = new Order
+            var orders = new List<Order>();
+            foreach (var dbOrder in dbOrders)
             {
-                Id = dbOrder.Id,
-                UserId = dbOrder.UserId,
-                Status = (OrderStatus)(int)dbOrder.Status,
-                CreatedAt = Timestamp.FromDateTime(dbOrder.CreatedAt.ToUniversalTime()),
+                var order = new Order
+                {
+                    Id = dbOrder.Id,
+                    UserId = dbOrder.UserId,
+                    Status = (OrderStatus)(int)dbOrder.Status,
+                    CreatedAt = Timestamp.FromDateTime(dbOrder.CreatedAt.ToUniversalTime()),
+                };
+
+                order.Items.AddRange(dbOrder.Items.Select(x => new OrderItem
+                {
+                    Id = x.Id,
+                    ProductId = x.ProductId,
+                    OrderId = x.OrderId,
+                    Price = (double)x.Price,
+                    Quantity = x.Quantity
+                }));
+
+                orders.Add(order);
+            }
+            
+            return new GetOrdersResponse()
+            {
+                Orders = {orders }
             };
-
-            order.Items.AddRange(dbOrder.Items.Select(x => new OrderItem
-            {
-                Id = x.Id,
-                ProductId = x.ProductId,
-                OrderId = x.OrderId,
-                Price = (double)x.Price,
-                Quantity = x.Quantity
-            }));
-
-            return order;
         }
 
         // Creates a new order and returns its generated ID.
