@@ -1,4 +1,5 @@
 ﻿@page "/orders"
+@using OrderService.GrpcContracts
 @inject Services.IOrderServiceClient OrderServiceClient
 
 <h3>Orders</h3>
@@ -32,6 +33,9 @@ else
                 <td>@order.Status</td>
                 <td>@order.CreatedAt.ToDateTime().ToString("g")</td>
                 <td>@order.Items.Count</td>
+                <td>
+                        <button class="btn btn-success btn-sm" @onclick="() => ConfirmOrder(order)" disabled="@(order.Status != OrderStatus.Created)">Confirm</button>
+                </td>
             </tr>
         }
         </tbody>
@@ -40,14 +44,23 @@ else
 
 @code {
     // List to hold orders retrieved from the gRPC OrderService
-    private List<OrderService.GrpcContracts.Order> orders = new();
+    private List<global::OrderService.GrpcContracts.Order> orders = new();
 
     protected override async Task OnInitializedAsync()
     {
         // Assuming you have implemented GetAllOrdersAsync in your IOrderServiceClient.
         // This method should retrieve all orders from OrderService.
-        var order = await OrderServiceClient.GetOrderAsync(0);
+        orders = await OrderServiceClient.GetOrdersAsync(1);
+    }
 
-        orders.Add(order);
+    private async Task ConfirmOrder(global::OrderService.GrpcContracts.Order order)
+    {
+        order.Status = OrderStatus.Paid;
+        var result = await OrderServiceClient.UpdateOrderAsync(order);
+
+        if (result.Success)
+        {
+            orders = await OrderServiceClient.GetOrdersAsync(1);
+        }
     }
 }

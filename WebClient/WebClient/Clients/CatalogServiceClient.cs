@@ -4,7 +4,8 @@ namespace WebClient.Services
 {
     public interface ICatalogServiceClient
     {
-        Task<GetProductResponse> GetProductAsync(int productId);
+        Task<Product> GetProductAsync(int productId);
+        Task<GetAllProductsResponse> GetAllProductsAsync();
         Task<CreateProductResponse> CreateProductAsync(Models.CreateProductRequest request);
         Task<DeleteProductResponse> DeleteProductAsync(int productId);
     }
@@ -18,10 +19,15 @@ namespace WebClient.Services
             _client = client;
         }
 
-        public async Task<GetProductResponse> GetProductAsync(int productId)
+        public async Task<Product> GetProductAsync(int productId)
         {
             var request = new GetProductRequest { ProductId = productId };
             return await _client.GetProductAsync(request);
+        }
+
+        public async Task<GetAllProductsResponse> GetAllProductsAsync()
+        {
+            return _client.GetAllProducts(new GetAllProductsRequest());
         }
 
         public async Task<CreateProductResponse> CreateProductAsync(Models.CreateProductRequest request)

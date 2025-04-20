@@ -1,7 +1,9 @@
 ﻿using CatalogService.Application.Repositories;
 using CatalogService.Domain.Entities;
 using CatalogService.GrpcContracts;
+using Google.Protobuf.Collections;
 using Grpc.Core;
+using Product = CatalogService.Domain.Entities.Product;
 
 namespace CatalogService.Presentation.Services
 {
@@ -16,7 +18,7 @@ namespace CatalogService.Presentation.Services
             _categoryRepository = categoryRepository;
         }
 
-        public override async Task<GetProductResponse> GetProduct(GetProductRequest request, ServerCallContext context)
+        public override async Task<GrpcContracts.Product> GetProduct(GetProductRequest request, ServerCallContext context)
         {
             var product = await _productRepository.GetByIdAsync(request.ProductId);
 
@@ -28,7 +30,7 @@ namespace CatalogService.Presentation.Services
                 }
             }
 
-            var response = new GetProductResponse
+            var response = new GrpcContracts.Product
             {
                 ProductId = request.ProductId,
                 Name = product.Name,
@@ -36,6 +38,34 @@ namespace CatalogService.Presentation.Services
                 Price = product.Price,
                 Stock = product.Stock
             };
+
+            return response;
+        }
+
+        public override async Task<GetAllProductsResponse> GetAllProducts(GetAllProductsRequest request, ServerCallContext context)
+        {
+            var products = await _productRepository.GetAllAsync();
+
+            if (!products.Any())
+            {
+                throw new RpcException(new Status(StatusCode.NotFound, "Products were not found"));
+            }
+
+            var response = new GetAllProductsResponse();
+
+            foreach (var product in products)
+            {
+                var grpcProduct = new GrpcContracts.Product
+                {
+                    ProductId = product.Id,
+                    Name = product.Name,
+                    Description = product.Description,
+                    Price = product.Price,
+                    Stock = product.Stock
+                };
+
+                response.Products.Add(grpcProduct);
+            }
 
             return response;
         }

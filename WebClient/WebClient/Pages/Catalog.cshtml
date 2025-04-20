@@ -1,0 +1,12 @@
+﻿@page "/catalog"
+@model WebClient.Pages.CatalogModel
+@{
+    ViewData["Title"] = "Каталог";
+}
+<h1>Каталог товаров</h1>
+<ul>
+    @foreach (var item in Model.CatalogItems)
+    {
+        <li>@item.Name - @item.Price руб.</li>
+    }
+</ul>

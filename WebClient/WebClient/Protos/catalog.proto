@@ -8,9 +8,10 @@ message GetProductRequest {
   int32 productId = 1;
 }
 
-message GetProductResponse {
+// Renamed to simply "Product"
+message Product {
   int32 productId = 1;
-  string name = 2;	
+  string name = 2;
   string description = 3;
   int32 price = 4;
   int32 stock = 5;
@@ -47,14 +48,23 @@ message DeleteProductRequest {
 }
 
 message DeleteProductResponse {
-  bool success = 2;
-  string message = 3;
+  bool success = 1;
+  string message = 2;
 }
 
+// New messages for getting all products.
+message GetAllProductsRequest {
+  // Empty request
+}
+
+message GetAllProductsResponse {
+  repeated Product products = 1;
+}
 
 service Catalog {
-  rpc GetProduct(GetProductRequest) returns (GetProductResponse);
+  rpc GetProduct(GetProductRequest) returns (Product);
   rpc CreateProduct(CreateProductRequest) returns (CreateProductResponse);
   rpc DeleteProduct(DeleteProductRequest) returns (DeleteProductResponse);
   rpc CreateCategory(CreateCategoryRequest) returns (CreateCategoryResponse);
+  rpc GetAllProducts(GetAllProductsRequest) returns (GetAllProductsResponse);
 }

@@ -76,23 +76,13 @@ else
     // Сохраненный идентификатор текущего заказа (если заказ уже создан)
 
     private string? resultMessage;
-    private List<GetProductResponse> _products = null;
+    private List<Product> _products = null;
     private HashSet<int> SelectedProductIds = new HashSet<int>();
 
     protected override async Task OnInitializedAsync()
     {
-        _products = new List<GetProductResponse>();
-        for (var i = 1; i <= 5; i++)
-        {
-            try
-            {
-                var prod = await CatalogClient.GetProductAsync(i);
-                _products.Add(prod);
-            }
-            catch (Grpc.Core.RpcException ex) when (ex.StatusCode == Grpc.Core.StatusCode.NotFound)
-            {
-            }
-        }
+        var  response =await CatalogClient.GetAllProductsAsync();
+        _products = response.Products.ToList();
     }
 
     private void NavigateToCreateProduct()
